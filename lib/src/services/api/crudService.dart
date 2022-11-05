@@ -14,6 +14,7 @@ import 'package:http/http.dart' as http;
  * Represents a basic CRUDService
  */
 mixin CRUDService<T> on WebApiService {
+  @override
   String get endpoint => serverInfo.url + "/$resourceRel";
   String get resourceRel;
   String get searchPath => "";

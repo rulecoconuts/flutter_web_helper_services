@@ -1,13 +1,15 @@
-class UserHolder<U> {
+import 'package:flutter/foundation.dart';
+
+class UserHolder<U> with ChangeNotifier {
   U? _user;
-  Function(U? user)? onUserChanged;
   UserHolder();
 
+  /// Notifies listeners when the user changes
   set user(U? user) {
     bool callUserChanged = user != _user;
     _user = user;
     if (callUserChanged) {
-      onUserChanged?.call(_user);
+      notifyListeners();
     }
   }
 

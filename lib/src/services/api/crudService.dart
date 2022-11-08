@@ -25,7 +25,8 @@ mixin CRUDService<T> on WebApiService {
   ///
   Future<T> getFromUrl(String url, {Auth? auth, BuildContext? context}) async {
     var request = http.Request("GET", Uri.parse(url));
-    (auth ?? await getDefaultAuth(context: context)).addToRequest(request);
+    await (auth ?? await getDefaultAuth(context: context))
+        .addToRequest(request);
 
     String jsonString = await sendRequest(request);
     return deserializer.deserialize<T>(json.decode(jsonString));
@@ -53,7 +54,8 @@ mixin CRUDService<T> on WebApiService {
     request.headers.addAll(headers);
 
     request.body = body;
-    (auth ?? await getDefaultAuth(context: context)).addToRequest(request);
+    await (auth ?? await getDefaultAuth(context: context))
+        .addToRequest(request);
 
     return request;
   }
@@ -68,7 +70,8 @@ mixin CRUDService<T> on WebApiService {
   Future<pagination.Page<T>> getPageFromUrl(String url,
       {Auth? auth, BuildContext? context}) async {
     var request = http.Request("GET", Uri.parse(url));
-    (auth ?? await getDefaultAuth(context: context)).addToRequest(request);
+    await (auth ?? await getDefaultAuth(context: context))
+        .addToRequest(request);
     String jsonString = await sendRequest(request);
     return getPageFromJson(json.decode(jsonString));
   }
@@ -92,7 +95,8 @@ mixin CRUDService<T> on WebApiService {
 
     request.body = json.encode(serializer.serialize<T>(entity));
 
-    (auth ?? await getDefaultAuth(context: context)).addToRequest(request);
+    await (auth ?? await getDefaultAuth(context: context))
+        .addToRequest(request);
 
     var response = await request.send();
 
@@ -123,7 +127,7 @@ mixin CRUDService<T> on WebApiService {
     request.body = json.encode(serializer.serialize<T>(entity));
 
     // Add auth to request
-    (auth ?? await getDefaultAuth()).addToRequest(request);
+    await (auth ?? await getDefaultAuth()).addToRequest(request);
     String bodyString = await sendRequest(request);
 
     try {
@@ -141,7 +145,7 @@ mixin CRUDService<T> on WebApiService {
     request.body = json.encode(serializer.serialize<T>(entity));
 
     // Add auth to request
-    (auth ?? await getDefaultAuth()).addToRequest(request);
+    await (auth ?? await getDefaultAuth()).addToRequest(request);
     return await sendRequest(request);
   }
 

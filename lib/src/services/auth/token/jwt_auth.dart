@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:web_helper_services/src/services/auth/auth_.dart';
 
 import 'package:http/http.dart';
@@ -9,12 +11,17 @@ class JwtAuth implements Auth {
   JwtAuth(this.token);
 
   @override
-  void addToMultipartRequest(MultipartRequest request) {
-    // TODO: implement addToMultipartRequest
+  FutureOr addToMultipartRequest(MultipartRequest request) async {
+    await addToBaseRequest(request);
   }
 
   @override
-  void addToRequest(Request request) {
+  FutureOr addToRequest(BaseRequest request) async {
+    await addToBaseRequest(request);
+  }
+
+  @override
+  FutureOr addToBaseRequest(BaseRequest request) async {
     request.headers["Authorization"] =
         token.startsWith("Bearer") ? token : "Bearer $token";
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:web_helper_services/src/services/auth/auth_.dart';
 
 import 'package:http/http.dart';
@@ -26,5 +28,11 @@ class UsernamePasswordAuth implements Auth {
     request.headers.addAll(headers);
     request.bodyFields[usernameLabel] = username;
     request.bodyFields[passwordLabel] = password;
+  }
+
+  @override
+  FutureOr addToBaseRequest(BaseRequest request) {
+    // TODO: implement addToBaseRequest
+    throw UnimplementedError();
   }
 }

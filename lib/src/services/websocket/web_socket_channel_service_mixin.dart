@@ -14,7 +14,8 @@ import 'package:web_helper_services/src/services/websocket/web_socket_service.da
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
-mixin WebSocketChannelService<U> on WebSocketService<U> {
+/// Wraps [WebSocketService] API around [IOWebSocketChannel] API
+mixin WebSocketChannelServiceMixin<U> on WebSocketService<U> {
   IOWebSocketChannel? webSocketChannel;
   StreamController? webSocketStreamController;
 

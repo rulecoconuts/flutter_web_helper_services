@@ -8,10 +8,7 @@ import 'package:web_helper_services/src/services/serverInfo.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_helper_services/src/storage/tokenStorage.dart';
 
-mixin LoginService<U> on WebApiService {
-  @override
-  String get endpoint => serverInfo.url + "/login";
-
+abstract class LoginService<U> with WebApiService {
   TokenStorage get tokenStorage;
 
   Map<String, dynamic> convertUserDataToCredentials(U user);

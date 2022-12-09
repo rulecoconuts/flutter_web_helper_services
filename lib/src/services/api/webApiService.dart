@@ -23,8 +23,9 @@ mixin WebApiService {
     var response = await request.send();
     String jsonString = await response.stream.bytesToString();
 
-    if (response.statusCode < 200 || response.statusCode > 299)
+    if (response.statusCode < 200 || response.statusCode > 299) {
       throw Exception(response);
+    }
 
     return jsonString;
   }

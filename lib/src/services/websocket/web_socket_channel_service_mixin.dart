@@ -69,7 +69,7 @@ mixin WebSocketChannelServiceMixin<U> on WebSocketService<U> {
 
   /// Create web socket channel
   IOWebSocketChannel createSocketChannel(dynamic url,
-      {Duration pingInterval = const Duration(seconds: 5)}) {
+      {Duration? pingInterval}) {
     return IOWebSocketChannel.connect(
       url,
       pingInterval: pingInterval,

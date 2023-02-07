@@ -13,7 +13,7 @@ import 'package:http/http.dart' as http;
 /**
  * Represents a basic CRUDService
  */
-mixin CRUDService<T> on WebApiService {
+abstract class CRUDService<T> extends WebApiService {
   @override
   String get endpoint => serverInfo.url + "/$resourceRel";
   String get resourceRel;
@@ -187,12 +187,15 @@ mixin CRUDService<T> on WebApiService {
     if (json.containsKey("_embedded")) {
       // Extract page result as it is into a [LiteralPageResult] object containing
       // page details
-      pageResult = pagination.LiteralPageResult.fromJson(json);
+      pageResult = deserializer.deserialize<pagination.LiteralPageResult>(json);
+
+      // pagination.LiteralPageResult.fromJson(json);
     } else {
       // The page was not formatted using a proper assembler on the server side
       // Generate literal page result from json using a proxy
       var literalResultNoAssembler =
-          pagination.LiteralPageResultNoAssembler.fromJson(json);
+          deserializer.deserialize<pagination.SpringPage>(json);
+      // pagination.SpringPage.fromJson<T>(json);
       pagination.PageDetails pageDetails = pagination.PageDetails(
           literalResultNoAssembler.size, literalResultNoAssembler.number,
           totalElements: literalResultNoAssembler.totalElements,
@@ -207,9 +210,13 @@ mixin CRUDService<T> on WebApiService {
     // Deserialize page contents into List of type T
     List entitiesJson = pageResult.embedded[resourceRel];
 
+    // T Function(Map<String, dynamic>) deserializer =
+    //     Ioc().use("deserializer_$T");
+
     List<T> contents = entitiesJson
-        .map((entityJson) =>
-            deserializer.deserialize<T>(entityJson as Map<String, dynamic>))
+        .map((entityJson) => entityJson is T
+            ? entityJson
+            : deserializer.deserialize<T>(entityJson as Map<String, dynamic>))
         .toList();
 
     // construct and return useful page object

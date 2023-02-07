@@ -1,10 +1,9 @@
-import 'dart:convert';
-
-import 'package:flutter/src/widgets/framework.dart';
 import 'package:http/http.dart' as http;
+import 'package:web_helper_services/src/services/auth/token/joint_token_creds.dart';
 import 'package:web_helper_services/web_helper_services.dart';
 
-abstract class BasicUserLoginService<I> extends LoginService<BasicUser<I>> {
+abstract class BasicUserLoginService<I>
+    extends LoginService<BasicUser<I>, TokenCredentialsContext> {
   @override
   GeneralDeserializer deserializer;
 
@@ -25,18 +24,22 @@ abstract class BasicUserLoginService<I> extends LoginService<BasicUser<I>> {
 
   /// Convert user data to [Map] credentials by using [serializer.serialize]
   @override
-  Map<String, dynamic> convertUserDataToCredentials(BasicUser<I> user) {
-    return serializer.serialize<BasicUser<I>>(user) as Map<String, dynamic>;
+  String convertUserDataToCredentials(BasicUser<I> user) {
+    return serializer.serialize<BasicUser<I>>(user) as String;
   }
 
   /// Login by converting [user] to map using [convertUserDataToCredentials]
   /// method
   @override
-  Future<String> login(BasicUser<I> user) async {
+  Future<TokenCredentialsContext> login(BasicUser<I> user) async {
     Uri uri = Uri.parse(endpoint);
-    Map<String, dynamic> credentials = convertUserDataToCredentials(user);
     http.Request request = http.Request("POST", uri);
-    request.body = json.encode(credentials);
-    return sendRequest(request);
+    request.body = convertUserDataToCredentials(user);
+    var response = await request.send();
+    if (!hasGoodResponseCode(response)) throw Exception(response);
+    String token = response.headers["authorization"] as String;
+    String? refreshToken = response.headers["RefreshToken"];
+
+    return TokenCredentialsContext(token, refreshToken);
   }
 }

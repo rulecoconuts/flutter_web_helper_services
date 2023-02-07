@@ -23,17 +23,26 @@ mixin WebSocketChannelServiceMixin<U> on WebSocketService<U> {
 
   @override
   Stream? get stream => webSocketStreamController?.stream;
+  Future? closingFuture;
 
   /// Close and reconnect to the server
   @override
   Future closeAndReconnect() async {
-    try {
-      await webSocketChannel?.sink.close();
-      await webSocketChannel?.innerWebSocket?.close();
-      await initialize();
-    } catch (e) {
-      print(e);
+    if (closingFuture != null) {
+      await closingFuture;
+      return;
     }
+
+    closingFuture = Future(() async {
+      try {
+        await webSocketChannel?.sink.close();
+        await webSocketChannel?.innerWebSocket?.close();
+        await initialize();
+      } finally {
+        closingFuture = null;
+      }
+    });
+    await closingFuture;
   }
 
   /// Setup web socket controller, streams, and stream controllers

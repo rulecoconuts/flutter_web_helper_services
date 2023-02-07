@@ -4,7 +4,7 @@ import 'package:web_helper_services/src/services/auth/auth.dart';
 import 'package:web_helper_services/src/services/serverInfo.dart';
 import 'package:http/http.dart' as http;
 
-mixin WebApiService {
+abstract class WebApiService {
   ServerInfo get serverInfo;
   set serverInfo(ServerInfo serverInfo);
 
@@ -27,5 +27,9 @@ mixin WebApiService {
       throw Exception(response);
 
     return jsonString;
+  }
+
+  bool hasGoodResponseCode(http.BaseResponse response) {
+    return response.statusCode >= 200 && response.statusCode <= 299;
   }
 }

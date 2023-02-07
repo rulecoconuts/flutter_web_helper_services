@@ -1,8 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'page.g.dart';
-
-@JsonSerializable(includeIfNull: false)
 class PageDetails {
   int size;
   int? totalElements;
@@ -36,14 +33,8 @@ class PageDetails {
     return PageDetails(size, number - 1,
         totalElements: totalElements, totalPages: totalPages);
   }
-
-  factory PageDetails.fromJson(Map<String, dynamic> json) =>
-      _$PageDetailsFromJson(json);
-  Map<String, dynamic> toJson() => _$PageDetailsToJson(this);
-  Map<String, dynamic> toJsonWeb() => _$PageDetailsToJson(this);
 }
 
-@JsonSerializable(includeIfNull: false)
 class LiteralPageResult {
   /// Embedded data
   @JsonKey(name: "_embedded", required: true)
@@ -58,11 +49,6 @@ class LiteralPageResult {
       this.embedded.addAll(embedded);
     }
   }
-
-  factory LiteralPageResult.fromJson(Map<String, dynamic> json) =>
-      _$LiteralPageResultFromJson(json);
-  Map<String, dynamic> toJson() => _$LiteralPageResultToJson(this);
-  Map<String, dynamic> toJsonWeb() => _$LiteralPageResultToJson(this);
 }
 
 class Page<T> {
@@ -78,25 +64,40 @@ class PageCollection<T> {
   void add(Page<T> page) {}
 }
 
+class SpringPageSortResult {
+  bool sorted;
+  bool empty;
+  bool unsorted;
+
+  SpringPageSortResult(
+      {this.sorted = false, this.empty = false, this.unsorted = false});
+}
+
 /// Literal Page without assembler
-@JsonSerializable(includeIfNull: false)
-class LiteralPageResultNoAssembler {
-  final List<dynamic> content = [];
+class SpringPage<T> {
+  final List<T> content = [];
   int number;
   int size;
 
-  int? totalElements;
-  int? totalPages;
+  int totalElements;
+  int totalPages;
+  int numberOfElements;
+  bool first;
+  bool empty;
+  bool last;
+  SpringPageSortResult? sort;
 
-  LiteralPageResultNoAssembler(this.size, this.number,
-      {this.totalElements, this.totalPages, List<dynamic> content = const []}) {
+  SpringPage(this.size, this.number,
+      {this.totalElements = 0,
+      this.totalPages = 0,
+      this.numberOfElements = 0,
+      this.first = false,
+      this.empty = false,
+      this.last = false,
+      this.sort,
+      List<T> content = const []}) {
     if (content != null) {
       this.content.addAll(content);
     }
   }
-
-  factory LiteralPageResultNoAssembler.fromJson(Map<String, dynamic> json) =>
-      _$LiteralPageResultNoAssemblerFromJson(json);
-
-  Map<String, dynamic> toJson() => _$LiteralPageResultNoAssemblerToJson(this);
 }

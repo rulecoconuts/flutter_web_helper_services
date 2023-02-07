@@ -8,15 +8,15 @@ import 'package:web_helper_services/src/services/serverInfo.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_helper_services/src/storage/tokenStorage.dart';
 
-abstract class LoginService<U> with WebApiService {
+abstract class LoginService<U, A> with WebApiService {
   TokenStorage get tokenStorage;
 
-  Map<String, dynamic> convertUserDataToCredentials(U user);
+  String convertUserDataToCredentials(U user);
 
   ///
   /// Login(Get a token from the API)
   ///
-  Future<String> login(U user);
+  Future<A> login(U user);
 
   /// Generate Auth object based on the app-wide strategy
   /// This method will only return an Auth object if generating it is successful.

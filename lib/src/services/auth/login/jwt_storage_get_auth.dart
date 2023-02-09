@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:web_helper_services/src/services/auth/login/token_storage_login_service.dart';
 import 'package:web_helper_services/src/services/auth/loginService.dart';
 import 'package:web_helper_services/web_helper_services.dart';
 
 /// Defines [getAuth] method of [LoginService]
-mixin JwtStorageGetAuthMixin<U, A> on LoginService<U, A> {
+mixin JwtStorageGetAuthMixin<U, A> on TokenStorageLoginService<U, A> {
   /// Get [JwtAuth] from [TokenStorage] string
   @override
   Future<Auth> getAuth({BuildContext? context}) async {

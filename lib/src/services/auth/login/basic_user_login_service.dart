@@ -1,9 +1,10 @@
 import 'package:http/http.dart' as http;
+import 'package:web_helper_services/src/services/auth/login/token_storage_login_service.dart';
 import 'package:web_helper_services/src/services/auth/token/joint_token_creds.dart';
 import 'package:web_helper_services/web_helper_services.dart';
 
 abstract class BasicUserLoginService<I>
-    extends LoginService<BasicUser<I>, TokenCredentialsContext> {
+    extends TokenStorageLoginService<BasicUser<I>, TokenCredentialsContext> {
   @override
   GeneralDeserializer deserializer;
 

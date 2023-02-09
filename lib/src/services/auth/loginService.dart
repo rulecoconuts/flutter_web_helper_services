@@ -9,8 +9,6 @@ import 'package:http/http.dart' as http;
 import 'package:web_helper_services/src/storage/tokenStorage.dart';
 
 abstract class LoginService<U, A> with WebApiService {
-  TokenStorage get tokenStorage;
-
   String convertUserDataToCredentials(U user);
 
   ///

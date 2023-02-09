@@ -20,6 +20,4 @@ class UserStorageService {
       required this.loginService,
       required this.objectStorage,
       this.currentUserKey = "current-user"});
-
-  TokenStorage get tokenStorage => loginService.tokenStorage;
 }

@@ -12,9 +12,14 @@ class SecureTokenStorage<T> extends TokenStorage<T> {
   SecureObjectStorage storage;
   Duration closeToExpiry;
 
-  SecureTokenStorage(String key, this.storage,
-      {this.closeToExpiry = const Duration(seconds: 30)})
-      : super(key);
+  @override
+  String key;
+
+  @override
+  String get refreshKey => "$key-refresh-token";
+
+  SecureTokenStorage(this.key, this.storage,
+      {this.closeToExpiry = const Duration(seconds: 30)});
 
   /// Get the stored token
   @override
@@ -70,7 +75,8 @@ class SecureTokenStorage<T> extends TokenStorage<T> {
 
   @override
   FutureOr delete() async {
-    return await storage.delete(key);
+    await storage.delete(key);
+    await storage.delete(refreshKey);
   }
 
   @override
@@ -94,5 +100,15 @@ class SecureTokenStorage<T> extends TokenStorage<T> {
     int milliseconds = payload["exp"] as int;
     DateTime expiryDate = DateTime.fromMillisecondsSinceEpoch(milliseconds);
     return DateTime.now().difference(expiryDate).compareTo(closeToExpiry) <= 0;
+  }
+
+  @override
+  FutureOr getRefreshToken() async {
+    return await storage.get(refreshKey);
+  }
+
+  @override
+  FutureOr storeRefreshToken(String refreshToken) async {
+    return await storage.store(refreshKey, refreshToken);
   }
 }

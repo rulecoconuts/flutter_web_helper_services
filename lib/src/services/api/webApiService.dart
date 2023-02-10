@@ -6,13 +6,7 @@ import 'package:http/http.dart' as http;
 
 abstract class WebApiService {
   ServerInfo get serverInfo;
-  set serverInfo(ServerInfo serverInfo);
-
   String get endpoint;
-
-  set deserializer(GeneralDeserializer deserializer);
-  set serializer(GeneralSerializer serializer);
-
   GeneralDeserializer get deserializer;
   GeneralSerializer get serializer;
 
@@ -23,13 +17,12 @@ abstract class WebApiService {
     var response = await request.send();
     String jsonString = await response.stream.bytesToString();
 
-    if (response.statusCode < 200 || response.statusCode > 299)
-      throw Exception(response);
+    if (response.statusCode < 200 || response.statusCode > 299) throw response;
 
     return jsonString;
   }
 
-  bool hasGoodResponseCode(http.BaseResponse response) {
+  bool has2xxResponseCode(http.BaseResponse response) {
     return response.statusCode >= 200 && response.statusCode <= 299;
   }
 }

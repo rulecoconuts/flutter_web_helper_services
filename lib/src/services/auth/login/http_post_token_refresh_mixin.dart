@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:web_helper_services/src/services/auth/login/token_refresh_mixin.dart';
 import 'package:web_helper_services/src/services/auth/token/joint_token_creds.dart';
 import 'package:http/http.dart' as http;
+import 'package:web_helper_services/src/services/user/user.dart';
 
 /// Mixin that defines a token refresh strategy that is centered around sending
 /// a [TokenCredentialsContext] object to the server and receiving a

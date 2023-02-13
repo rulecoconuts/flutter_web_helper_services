@@ -8,7 +8,7 @@ import 'package:web_helper_services/src/services/auth/loginService.dart';
 import 'package:web_helper_services/src/services/serverInfo.dart';
 import 'package:http/http.dart' as http;
 
-mixin UserService<U> on CRUDService<U> {
+mixin UserService<U, A> on CRUDService<U, A> {
   @override
   String get endpoint => serverInfo.url + "/users";
 
@@ -23,12 +23,15 @@ mixin UserService<U> on CRUDService<U> {
 
   /// Get update user information from the server
   Future<U> getLatestUserInfo(U user,
-      {Auth? auth, BuildContext? context, bool expanded = false}) async {
+      {A? auth,
+      bool expanded = false,
+      SerializationConfig? serializationConfig}) async {
     String url = getEntityURL(user);
     if (expanded) {
       // Completely expand the entity relationships into objects
       url += "?projection=expanded";
     }
-    return await getFromUrl(url, auth: auth, context: context);
+    return await getFromUrl(url,
+        auth: auth, serializationConfig: serializationConfig);
   }
 }

@@ -30,7 +30,7 @@ abstract class LoginService<U, A> with WebApiService {
   ///   - If the [context] argument is not null; navigation to the login page
   ///     defined by 'login' will be attempted.
   ///   - else; an [UnableToRenewTokenException] will be thrown
-  Future<A> getAuth({BuildContext? context});
+  Future<A> getAuth();
 
   /// Process http response into an authentication object
   Future<A> fetchAuthFromLoginResponse(http.BaseResponse response);

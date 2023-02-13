@@ -56,7 +56,7 @@ class TokenStorageBasicUserLoginService<I>
     http.Request request = http.Request("POST", uri);
     request.body = serializeUserInfoForLogin(user);
     var response = await request.send();
-    if (!has2xxResponseCode(response)) throw response;
+    if (!WebApiService.has2xxResponseCode(response)) throw response;
 
     return await fetchAuthFromLoginResponse(response);
   }

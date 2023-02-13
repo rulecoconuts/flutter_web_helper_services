@@ -22,7 +22,18 @@ abstract class WebApiService {
     return jsonString;
   }
 
-  bool has2xxResponseCode(http.BaseResponse response) {
+  /// Send request and return response
+  /// Throws exception containing the response if response status code
+  /// is not within the 200 - 299 range
+  Future<http.BaseResponse> sendRequestForResponse(http.Request request) async {
+    var response = await request.send();
+
+    if (response.statusCode < 200 || response.statusCode > 299) throw response;
+
+    return response;
+  }
+
+  static bool has2xxResponseCode(http.BaseResponse response) {
     return response.statusCode >= 200 && response.statusCode <= 299;
   }
 }

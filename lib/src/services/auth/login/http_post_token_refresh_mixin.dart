@@ -4,6 +4,7 @@ import 'package:web_helper_services/src/services/auth/login/token_refresh_mixin.
 import 'package:web_helper_services/src/services/auth/token/joint_token_creds.dart';
 import 'package:http/http.dart' as http;
 import 'package:web_helper_services/src/services/user/user.dart';
+import 'package:web_helper_services/web_helper_services.dart';
 
 /// Mixin that defines a token refresh strategy that is centered around sending
 /// a [TokenCredentialsContext] object to the server and receiving a
@@ -40,7 +41,7 @@ mixin HttpPostTokenRefreshMixin<U> on TokenRefreshMixin<U> {
     var response = await http.post(Uri.parse(url),
         headers: {"Content-Type": "application/json"}, body: body);
 
-    if (!has2xxResponseCode(response)) throw response;
+    if (!WebApiService.has2xxResponseCode(response)) throw response;
 
     return await getContextFromRefreshResponse(response);
   }

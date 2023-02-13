@@ -8,7 +8,7 @@ import 'package:web_helper_services/web_helper_services.dart';
 mixin TokenStorageGetAuthMixin<U> on TokenStorageLoginService<U> {
   /// Get [TokenCredentialsContext] from [TokenStorage] string
   @override
-  Future<TokenCredentialsContext> getAuth({BuildContext? context}) async {
+  Future<TokenCredentialsContext> getAuth() async {
     TokenCredentialsContext auth = TokenCredentialsContext(
         await tokenStorage.get() as String,
         await tokenStorage.getRefreshToken() as String?);

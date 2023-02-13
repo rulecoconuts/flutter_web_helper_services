@@ -1,102 +1,124 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:web_helper_services/src/serialization/serialization.dart';
-import 'package:web_helper_services/src/services/api/webApiService.dart';
-import 'package:web_helper_services/src/services/auth/auth.dart';
-import 'package:web_helper_services/src/services/auth/loginService.dart';
-import 'package:web_helper_services/src/services/pagination/page.dart'
-    as pagination;
-import 'package:web_helper_services/src/services/serverInfo.dart';
+import 'package:web_helper_services/web_helper_services.dart';
 import 'package:http/http.dart' as http;
+import 'package:web_helper_services/src/services/pagination/pagination.dart'
+    as pagination;
 
 /**
  * Represents a basic CRUDService
  */
-abstract class CRUDService<T> extends WebApiService {
+abstract class CRUDService<T, A> extends WebApiService {
   @override
-  String get endpoint => serverInfo.url + "/$resourceRel";
+  String get endpoint => "${serverInfo.url}/$resourceRel";
+
   String get resourceRel;
   String get searchPath => "";
   LoginService get loginService;
 
+  Future addAuthToRequest(A? auth, http.BaseRequest request, bool useAuth);
+
+  /// Get usable deserializer.
+  /// If an alternative is not provided, then use some default deserializer
+  GeneralDeserializer getUsableDeserializer(GeneralDeserializer? alternative) {
+    return alternative ?? deserializer;
+  }
+
+  /// Get usable serializer.
+  /// If an alternative is not provided, then use some default serializer
+  GeneralSerializer getUsableSerializer(GeneralSerializer? alternative) {
+    return alternative ?? serializer;
+  }
+
+  SerializationConfig getDefaultSerializationConfig() {
+    return SerializationConfig(
+        serializer: serializer, deserializer: deserializer);
+  }
+
+  SerializationConfig getUsableSerializationConfig(
+      SerializationConfig? alternative) {
+    return getDefaultSerializationConfig().merge(alternative);
+  }
+
   ///
   /// Get an entity from url
   ///
-  Future<T> getFromUrl(String url, {Auth? auth, BuildContext? context}) async {
+  Future<T> getFromUrl(String url,
+      {A? auth,
+      bool useAuth = true,
+      SerializationConfig? serializationConfig}) async {
     var request = http.Request("GET", Uri.parse(url));
-    await (auth ?? await getDefaultAuth(context: context))
-        .addToRequest(request);
 
-    String jsonString = await sendRequest(request);
-    return deserializer.deserialize<T>(json.decode(jsonString));
-  }
+    await addAuthToRequest(auth, request, useAuth);
 
-  /// Send request and extract response body string.
-  /// Throws exception containing the response if response status code
-  /// is not within the 200 - 299 range
-  Future<String> sendRequest(http.Request request) async {
-    var response = await request.send();
-    String jsonString = await response.stream.bytesToString();
+    String responseBody = await sendRequest(request);
 
-    if (response.statusCode < 200 || response.statusCode > 299)
-      throw Exception(response);
+    SerializationConfig mergedConfig =
+        getUsableSerializationConfig(serializationConfig);
 
-    return jsonString;
+    return mergedConfig.deserializer!.deserialize<T>(responseBody,
+        arguments: mergedConfig.deserializerArguments);
   }
 
   /// Generate a post request to a URL
   Future<http.Request> generatePostRequest(String url, String body,
       {Map<String, String> headers = const {"Content-Type": "application/json"},
-      Auth? auth,
-      BuildContext? context}) async {
+      A? auth,
+      bool useAuth = true}) async {
     var request = http.Request("POST", Uri.parse(url));
     request.headers.addAll(headers);
 
     request.body = body;
-    await (auth ?? await getDefaultAuth(context: context))
-        .addToRequest(request);
+    await addAuthToRequest(auth, request, useAuth);
 
     return request;
   }
 
   /// Send a request and get a page from it
-  Future<pagination.Page<T>> getPageFromRequest(http.Request request) async {
+  Future<pagination.Page<T>> getPageFromRequest(http.Request request,
+      {SerializationConfig? serializationConfig}) async {
     String jsonString = await sendRequest(request);
-    return getPageFromJson(json.decode(jsonString));
+    return getPageFromSerialized(jsonString,
+        serializationConfig: serializationConfig);
   }
 
   /// Get page of entities from URL
   Future<pagination.Page<T>> getPageFromUrl(String url,
-      {Auth? auth, BuildContext? context}) async {
+      {A? auth,
+      bool useAuth = true,
+      SerializationConfig? serializationConfig}) async {
     var request = http.Request("GET", Uri.parse(url));
-    await (auth ?? await getDefaultAuth(context: context))
-        .addToRequest(request);
+    await addAuthToRequest(auth, request, useAuth);
+
     String jsonString = await sendRequest(request);
-    return getPageFromJson(json.decode(jsonString));
+    return getPageFromSerialized(jsonString,
+        serializationConfig: serializationConfig);
   }
 
   /// Get default auth to communicate to server
-  Future<Auth> getDefaultAuth({BuildContext? context}) async {
-    return await loginService.getAuth(context: context);
+  Future<Auth> getDefaultAuth() async {
+    return await loginService.getAuth();
   }
 
   ///
   /// Create an entity
   ///
   Future<T> create(T entity,
-      {Auth? auth,
-      BuildContext? context,
-      bool useWebSerializer = false,
-      bool retrieveFromUrl = true}) async {
+      {A? auth,
+      bool retrieveFromUrl = true,
+      bool useAuth = true,
+      SerializationConfig? serializationConfig}) async {
     var url = endpoint;
     var request = http.Request("POST", Uri.parse(url));
     request.headers["Content-Type"] = "application/json";
 
-    request.body = json.encode(serializer.serialize<T>(entity));
+    SerializationConfig mergedConfig =
+        getUsableSerializationConfig(serializationConfig);
 
-    await (auth ?? await getDefaultAuth(context: context))
-        .addToRequest(request);
+    request.body = mergedConfig.serializer!
+        .serialize<T>(entity, arguments: mergedConfig.serializerArguments);
+    await addAuthToRequest(auth, request, useAuth);
 
     var response = await request.send();
 
@@ -106,8 +128,8 @@ abstract class CRUDService<T> extends WebApiService {
 
     if (!retrieveFromUrl) {
       // Get created entity directly from response body
-      Map<String, dynamic> jsonMap = json.decode(jsonStringBody);
-      return deserializer.deserialize<T>(jsonMap);
+      return mergedConfig.deserializer!.deserialize<T>(jsonStringBody,
+          arguments: mergedConfig.deserializerArguments);
     }
 
     // Entity url was given so get entity from that
@@ -119,33 +141,51 @@ abstract class CRUDService<T> extends WebApiService {
   /// if [patch] is false (default) then the request method will be PUT; else,
   /// the request method will be PATCH
   Future<T> update(T entity,
-      {Auth? auth, expanded = false, patch = false}) async {
+      {A? auth,
+      bool useAuth = true,
+      expanded = false,
+      patch = false,
+      SerializationConfig? serializationConfig}) async {
     var url = getEntityURL(entity) + (expanded ? "?projection=expanded" : "");
     var request = http.Request(patch ? "PATCH" : "PUT", Uri.parse(url));
     request.headers["Content-Type"] = "application/json";
 
-    request.body = json.encode(serializer.serialize<T>(entity));
+    SerializationConfig mergedConfig =
+        getUsableSerializationConfig(serializationConfig);
 
-    // Add auth to request
-    await (auth ?? await getDefaultAuth()).addToRequest(request);
+    request.body = mergedConfig.serializer!
+        .serialize<T>(entity, arguments: mergedConfig.serializerArguments);
+
+    await addAuthToRequest(auth, request, useAuth);
+
     String bodyString = await sendRequest(request);
 
     try {
-      return deserializer.deserialize<T>(json.decode(bodyString));
+      return mergedConfig.deserializer!.deserialize<T>(bodyString,
+          arguments: mergedConfig.deserializerArguments);
     } catch (e) {
       return entity;
     }
   }
 
-  Future delete(T entity, {Auth? auth, bool useEntityUrl = true}) async {
+  Future delete(T entity,
+      {A? auth,
+      bool useAuth = true,
+      bool useEntityUrl = true,
+      SerializationConfig? serializationConfig}) async {
     var url = useEntityUrl ? getEntityURL(entity) : endpoint;
     var request = http.Request("DELETE", Uri.parse(url));
     request.headers["Content-Type"] = "application/json";
 
-    request.body = json.encode(serializer.serialize<T>(entity));
+    SerializationConfig mergedConfig =
+        getUsableSerializationConfig(serializationConfig);
+
+    request.body = mergedConfig.serializer!
+        .serialize<T>(entity, arguments: mergedConfig.serializerArguments);
 
     // Add auth to request
-    await (auth ?? await getDefaultAuth()).addToRequest(request);
+    await addAuthToRequest(auth, request, useAuth);
+
     return await sendRequest(request);
   }
 
@@ -176,61 +216,32 @@ abstract class CRUDService<T> extends WebApiService {
   /// Get a list of questions from the server
   ///
   Future<pagination.Page<T>> findAll(
-      {Auth? auth,
+      {A? auth,
+      bool useAuth = true,
       BuildContext? context,
-      pagination.PageDetails? pageDetails}) async {
-    return await getPageFromUrl(addPageToUrl(endpoint, pageDetails));
-  }
-
-  pagination.Page<T> getPageFromJson(Map<String, dynamic> json) {
-    var pageResult;
-    if (json.containsKey("_embedded")) {
-      // Extract page result as it is into a [LiteralPageResult] object containing
-      // page details
-      pageResult = deserializer.deserialize<pagination.LiteralPageResult>(json);
-
-      // pagination.LiteralPageResult.fromJson(json);
-    } else {
-      // The page was not formatted using a proper assembler on the server side
-      // Generate literal page result from json using a proxy
-      var literalResultNoAssembler =
-          deserializer.deserialize<pagination.SpringPage>(json);
-      // pagination.SpringPage.fromJson<T>(json);
-      pagination.PageDetails pageDetails = pagination.PageDetails(
-          literalResultNoAssembler.size, literalResultNoAssembler.number,
-          totalElements: literalResultNoAssembler.totalElements,
-          totalPages: literalResultNoAssembler.totalPages);
-      Map<String, dynamic> embedded = {
-        "$resourceRel": literalResultNoAssembler.content
-      };
-      pageResult =
-          pagination.LiteralPageResult(pageDetails, embedded: embedded);
-    }
-
-    // Deserialize page contents into List of type T
-    List entitiesJson = pageResult.embedded[resourceRel];
-
-    // T Function(Map<String, dynamic>) deserializer =
-    //     Ioc().use("deserializer_$T");
-
-    List<T> contents = entitiesJson
-        .map((entityJson) => entityJson is T
-            ? entityJson
-            : deserializer.deserialize<T>(entityJson as Map<String, dynamic>))
-        .toList();
-
-    // construct and return useful page object
-    var page = pagination.Page<T>(pageResult.details);
-    page.contents.addAll(contents);
-
-    return page;
-  }
-
-  /// Search for users
-  Future<pagination.Page<T>> searchByFilterString(String filter,
-      {Auth? auth,
       pagination.PageDetails? pageDetails,
-      bool expanded = false}) async {
+      SerializationConfig? serializationConfig}) async {
+    return await getPageFromUrl(addPageToUrl(endpoint, pageDetails),
+        auth: auth, useAuth: useAuth, serializationConfig: serializationConfig);
+  }
+
+  pagination.Page<T> getPageFromSerialized(String serialized,
+      {SerializationConfig? serializationConfig}) {
+    SerializationConfig mergedConfig =
+        getUsableSerializationConfig(serializationConfig);
+
+    return mergedConfig.deserializer!.deserialize<pagination.Page<T>>(
+        serialized,
+        arguments: mergedConfig.deserializerArguments);
+  }
+
+  /// Search for entity using some filter string
+  Future<pagination.Page<T>> searchByFilterString(String filter,
+      {A? auth,
+      bool useAuth = true,
+      pagination.PageDetails? pageDetails,
+      bool expanded = false,
+      SerializationConfig? serializationConfig}) async {
     String url = "${serverInfo.url}/$searchPath";
     url = addPageToUrl(url, pageDetails);
 
@@ -244,6 +255,10 @@ abstract class CRUDService<T> extends WebApiService {
       url += "&projection=expanded";
     }
 
-    return getPageFromUrl(url, auth: auth);
+    pagination.Page<T> page = await getPageFromUrl(url,
+        useAuth: useAuth, auth: auth, serializationConfig: serializationConfig);
+    page.details.sortStrings.addAll(pageDetails?.sortStrings.toList() ?? []);
+
+    return page;
   }
 }

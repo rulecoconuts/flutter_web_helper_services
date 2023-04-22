@@ -1,6 +1,6 @@
 name: web_helper_services
 description: A flutter package that contains helpful utilities and packages for web services
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/Fejiro-A/flutter_web_helper_services
 
 environment:

@@ -77,4 +77,12 @@ class BasicDeviceIndentificationService
 
     return uniqueDeviceId;
   }
+
+  /// Get version string of IOS device
+  @override
+  Future<String> getIOSVersion() async {
+    var iosDeviceInfo = await DeviceInfoPlugin().iosInfo;
+
+    return iosDeviceInfo.utsname.machine ?? "";
+  }
 }

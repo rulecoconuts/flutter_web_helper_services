@@ -6,6 +6,7 @@ import 'package:web_helper_services/src/services/websocket/web_socket_service.da
 /// and attempt to reconnect if so
 mixin TimerDrivenWebSocketReconnectionMixin on WebSocketService {
   Timer? autoReconnectTimer;
+  Duration? autoReconnectTimerDuration;
 
   @override
   Future close() {
@@ -18,7 +19,8 @@ mixin TimerDrivenWebSocketReconnectionMixin on WebSocketService {
   void startReconnectionCheckTimer() {
     stopReconnectionCheckTimer();
     autoReconnectTimer =
-        Timer.periodic(Duration(milliseconds: 50), (timer) async {
+        Timer.periodic(autoReconnectTimerDuration ?? Duration(milliseconds: 50),
+            (timer) async {
       if (!await isConnectionClosed()) return;
 
       await closeAndReconnect();

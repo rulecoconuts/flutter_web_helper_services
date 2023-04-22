@@ -78,6 +78,16 @@ mixin WebSocketChannelServiceMixin<U> on WebSocketService {
     webSocketChannel = null;
   }
 
+  /// On websocket connection done
+  void onDone() {
+    onClosed();
+  }
+
+  /// On websocket connection error
+  void onClosedFromError(Object object, StackTrace stackTrace) async {
+    onClosed();
+  }
+
   /// Setup web socket controller, streams, and stream controllers
   /// Reconnection strategy:
   ///   - add an onDone closure to the [webSocketChannel.stream.listen]
@@ -101,15 +111,9 @@ mixin WebSocketChannelServiceMixin<U> on WebSocketService {
       closed = false;
 
       // Listen for messages
-      socketListenSubscription = webSocketChannel?.stream.listen(
-        (message) {
-          broadcastMessage(message);
-        },
-        onDone: () {
-          socketListenSubscription?.cancel();
-          onClosed();
-        },
-      );
+      socketListenSubscription = webSocketChannel?.stream.listen((message) {
+        broadcastMessage(message);
+      }, onDone: onDone, onError: onClosedFromError);
     });
 
     try {
